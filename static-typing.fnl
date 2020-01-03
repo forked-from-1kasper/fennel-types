@@ -114,6 +114,7 @@
       "⁰¹²³⁴⁵⁶⁷⁸⁹"
       "₀₁₂₃₄₅₆₇₈₉"))
 
+;;; Function over types
 (fn primitive-type? [τ]
   (match τ
     :nil      true
@@ -125,7 +126,6 @@
     :userdata true
     _         false))
 
-;;; Function over types
 (fn complex-type? [τ]
   (and (table? τ) τ.constr))
 
