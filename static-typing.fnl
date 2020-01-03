@@ -84,6 +84,9 @@
 
 (fn gensym-str [] (tostring (gensym)))
 
+(fn warn [str]
+  (io.stderr:write (.. str "\n")))
+
 ;;; S-expression pattern matching
 (fn elim-term [term app lam variable atom]
   (if (list? term)
@@ -271,7 +274,7 @@
   (var constraints {})
   (get-constraints constraints expected-type type-here)
   (each [key value (pairs constraints)]
-    (print (constrain-warning def-name key value)))
+    (warn (constrain-warning def-name key value)))
   (prune constraints expected-type))
 
 (fn inplace-constrain [context def-name expected-type type-here]
