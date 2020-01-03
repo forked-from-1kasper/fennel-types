@@ -1,5 +1,7 @@
 # Static typing in [Fennel](https://github.com/bakpakin/Fennel)
 
+Still WIP.
+
 Example:
 
 ```lisp
