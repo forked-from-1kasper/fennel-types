@@ -114,7 +114,7 @@
       "⁰¹²³⁴⁵⁶⁷⁸⁹"
       "₀₁₂₃₄₅₆₇₈₉"))
 
-;;; Function over types
+;;; Functions over types
 (fn primitive-type? [τ]
   (match τ
     :nil      true
@@ -163,7 +163,7 @@
         "the type variable “%s” has been constrained to be type “%s”.")
     wherein type-variable-name (pprint-type τ)))
 
-;;; Convert S-expression into internal representation
+;;; Convert S-expression (some type) into internal representation
 (fn parse-complex-type [parser lst]
   (match lst [type-constr & args]
     (let [type-constr′ (tostring type-constr)
