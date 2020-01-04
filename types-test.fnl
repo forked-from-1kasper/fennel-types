@@ -1,9 +1,9 @@
 (require-macros :static-typing)
 
-(⊢ id : (→ α α))
+(⊢ id : α → α)
 (⊢ id ≔ (λ (a : α) ↦ a))
 
-(⊢ const : (→ α β α))
+(⊢ const : α → β → α)
 (⊢ const ≔ (λ (a : α) (b : β) ↦ a))
 
 (⊢ id-test : α)
@@ -14,9 +14,9 @@
 
 (⊢ z ≔ true)
 
-(⊢ +   : (→ real real real))
-(⊢ >   : (→ real real bool))
-(⊢ not : (→ bool bool))
+(⊢ +   : real → real → real)
+(⊢ >   : real → real → bool)
+(⊢ not : bool → bool)
 
 (⊢ x : real)
 (⊢ x ≔ 42)
@@ -31,7 +31,7 @@
 (⊢ unsafe-variable : bool)
 (local unsafe-variable 1)
 
-(⊢ real-id : (→ real real))
+(⊢ real-id : real → real)
 (⊢ real-id ≔ (λ (a : real) ↦ (+ 1 2) a))
 
 (print x y z)

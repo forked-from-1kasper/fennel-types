@@ -40,7 +40,10 @@
   (table.remove arr (length arr)))
 
 (fn push-last [arr x]
-  (table.insert arr (length arr) x))
+  (let [len (length arr)]
+    (match len
+      0 (table.insert arr x)
+      _ (table.insert arr len x))))
 
 (fn map-1-in-2-out [f lst]
   (var res₁ []) (var res₂ [])
@@ -82,12 +85,15 @@
 (fn function? [val]
   (= (type val) :function))
 
-(fn non-empty? [tbl] (not= (next tbl) nil))
+(fn non-empty? [tbl] (not= (length tbl) 0))
 
 (fn gensym-str [] (tostring (gensym)))
 
 (fn warn [str]
   (io.stderr:write (.. str "\n")))
+
+(fn odd? [n]  (= (% n 2) 0))
+(fn even? [n] (= (% n 2) 1))
 
 ;;; Type checker configuration
 (local primitive-types
@@ -98,8 +104,7 @@
    "𝔹"      :boolean})
 
 (local complex-types
-  {"->" :function
-   "→"  :function})
+  {})
 
 (local type-variable-valid-characters
   (.. "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
@@ -158,6 +163,17 @@
     wherein type-variable-name (pprint-type τ)))
 
 ;;; Convert S-expression (some type) into internal representation
+(fn split-by-sep [term syntax-name separators]
+  (var first-part []) (var sep? false)
+  (while (and (not sep?) (non-empty? term))
+    (let [cur (table.remove term 1)
+          sep-val (. separators (tostring cur))]
+      (if (and (sym? cur) sep-val)
+          (set sep? sep-val)
+          (table.insert first-part cur))))
+  (assert sep? (string.format "invalid %s-syntax" syntax-name))
+  (values sep? first-part term))
+
 (fn parse-complex-type [parser lst]
   (match lst [type-constr & args]
     (let [type-constr′ (tostring type-constr)
@@ -175,36 +191,38 @@
   (when (type-name:match type-variable-regex)
     {:display-name type-name :name (.. type-name salt)}))
 
-(fn parse-type [salt type]
-  (let [type′ (tostring type)]
-    (if (sym? type)
-        (or (. primitive-types type′)
-            (parse-type-variable type′ salt)
-            (error (unknown-type-error type′)))
-        (list? type) (parse-complex-type (partial parse-type salt) type)
-        (error (unknown-type-error type′)))))
+(fn split-by-arrow [term]
+  (var res [])
+  (each [idx val (ipairs term)]
+    (if (odd? idx)  (assert (sym= val "→") "invalid arrow syntax")
+        (even? idx) (table.insert res val)))
+  res)
 
-;;; S-expression parsing
+(fn parse-non-arrow [parse-type salt term]
+  (if (list? term)
+      (parse-complex-type (partial parse-type salt) term)
+      (let [term′ (tostring term)]
+        (or (. primitive-types term′)
+            (parse-type-variable term′ salt)
+            (error (unknown-type-error term′))))))
+
+(fn parse-type [salt term]
+  (let [args (split-by-arrow term)]
+    (if (= (length args) 1)
+        (parse-non-arrow parse-type salt (. args 1))
+        {:constr :function :args (map (partial parse-type salt) args)})))
+
 (fn parse-annotated-variable [salt term]
-  (assert (= (length term) 3)
-          "invalid type declaration syntax")
-  (match term [name sep τ]
-    (do (assert (sym= sep ":") "“:” was not found in type declaration")
-        (assert (sym? name) (string.format "“%s” is not a variable name"
-                                           (tostring name)))
-        (values name (parse-type salt τ)))))
+  (let [(_ var-list body) (split-by-sep term ":" {":" true})
+        name (. var-list 1)]
+    (assert (= (length var-list) 1) "invalid type declaration")
+    (assert (sym? name) "invalid type declaration syntax")
+    (values name (parse-type salt body))))
 
-(fn parse-lam [salt body]
-  (var args-ann []) (var sep? false)
-  (while (and (not sep?) (non-empty? body))
-    (let [arg (table.remove body 1)]
-      (if (sym= arg "↦")
-          (set sep? true)
-          (table.insert args-ann arg))))
-
-  (let [(args types)
-        (map-1-in-2-out (partial parse-annotated-variable salt) args-ann)]
-    (assert sep? "invalid λ-syntax")
+(fn parse-lam [salt term]
+  (let [(_ args-ann body) (split-by-sep term "λ" {"↦" true})
+        (args types) (map-1-in-2-out (partial parse-annotated-variable salt)
+                                     args-ann)]
     (values args types body)))
 
 (fn elim-term [term app lam variable atom]
@@ -217,7 +235,8 @@
 ;;; Type inference and unification
 (fn prune [S τ]
   (if (type-variable? τ) (get S τ.name τ)
-      (complex-type? τ) {:constr τ.constr :args (map (partial prune S) τ.args)}
+      (complex-type? τ) {:constr τ.constr
+                         :args (map (partial prune S) τ.args)}
       τ))
 
 (fn unify [S T₁ T₂]
@@ -268,8 +287,8 @@
         context′ (union context Δcontext)
         (body′ ret-type) (infer context′ salt body)
         (full-body′ _) (map-1-in-2-out (partial infer context salt) full-body)]
-    (push-last types ret-type)
-    (values `(fn ,names ,(unpack full-body′) ,body′)
+    (push-last types ret-type) (push-last full-body′ body′)
+    (values `(fn ,names ,(unpack full-body′))
              {:constr :function :args types})))
 
 (fn infer-type [context salt value]
@@ -304,20 +323,27 @@
   (let [τ (constrain def-name type-here expected-type)]
     (tset context def-name (constrain def-name expected-type τ))))
 
-(fn define-constant [name value]
-  (let [name-str (tostring name)
+(fn define-constant [names full-body]
+  (assert (= (length names) 1) "cannot define multiple values")
+  (let [body (table.remove full-body)
+        name (. names 1)
+        name-str (tostring name)
         salt (gensym-str)
-        (value′ type-here) (infer-type *ctx* salt value)
+        (full-body′ _) (map-1-in-2-out (partial infer-type *ctx* salt) full-body)
+        (body′ type-here) (infer-type *ctx* salt body)
         expected-type (. *ctx* name-str)]
     (if expected-type
       (do (assert (unify {} expected-type type-here)
-                  (mismatched-type-error value expected-type type-here))
+                  (mismatched-type-error body expected-type type-here))
           (inplace-constrain *ctx* name-str expected-type type-here))
       (tset *ctx* name-str type-here))
-    `(local ,name ,value′)))
+    (push-last full-body′ body′)
+    `(local ,name ,(unpack full-body′))))
 
-(fn declare-type [name τ]
-  (tset *ctx* (tostring name) (parse-type (gensym-str) τ)))
+(fn declare-type [names term]
+  (let [τ (parse-type (gensym-str) term)]
+    (each [_ name (ipairs names)]
+      (tset *ctx* (tostring name) τ))))
 
 ;;; Macro syntax
 ;; Fennel reads ":" in tables incorrectly
@@ -327,11 +353,9 @@
    ":="   define-constant
    "≔"   define-constant})
 
-(fn context-syntax [variable sep body]
-  (assert (sym? sep) "invalid ⊢-syntax")
-  (let [sep′ (tostring sep)
-        func (. context-commands sep′)]
-    (assert func "unknown command")
-    (func variable body)))
+(fn context-syntax [...]
+  (let [(func first-part second-part)
+        (split-by-sep [...] "⊢" context-commands)]
+    (func first-part second-part)))
 
 {"⊢" context-syntax}
