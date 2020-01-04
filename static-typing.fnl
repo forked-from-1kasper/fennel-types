@@ -82,21 +82,12 @@
 (fn function? [val]
   (= (type val) :function))
 
+(fn non-empty? [tbl] (not= (next tbl) nil))
+
 (fn gensym-str [] (tostring (gensym)))
 
 (fn warn [str]
   (io.stderr:write (.. str "\n")))
-
-;;; S-expression pattern matching
-(fn elim-term [term app lam variable atom]
-  (if (list? term)
-    (match term [f & args]
-      (if (sym= f "λ")
-          (match args [lam-args lam-body]
-            (lam lam-args lam-body))
-          (app f args)))
-    (sym? term) (variable term)
-    (atom term)))
 
 ;;; Type checker configuration
 (local primitive-types
@@ -193,6 +184,36 @@
         (list? type) (parse-complex-type (partial parse-type salt) type)
         (error (unknown-type-error type′)))))
 
+;;; S-expression parsing
+(fn parse-annotated-variable [salt term]
+  (assert (= (length term) 3)
+          "invalid type declaration syntax")
+  (match term [name sep τ]
+    (do (assert (sym= sep ":") "“:” was not found in type declaration")
+        (assert (sym? name) (string.format "“%s” is not a variable name"
+                                           (tostring name)))
+        (values name (parse-type salt τ)))))
+
+(fn parse-lam [salt body]
+  (var args-ann []) (var sep? false)
+  (while (and (not sep?) (non-empty? body))
+    (let [arg (table.remove body 1)]
+      (if (sym= arg "↦")
+          (set sep? true)
+          (table.insert args-ann arg))))
+
+  (let [(args types)
+        (map-1-in-2-out (partial parse-annotated-variable salt) args-ann)]
+    (assert sep? "invalid λ-syntax")
+    (values args types body)))
+
+(fn elim-term [term app lam variable atom]
+  (if (list? term)
+    (match term [f & args]
+      (if (sym= f "λ") (lam args) (app f args)))
+    (sym? term) (variable term)
+    (atom term)))
+
 ;;; Type inference and unification
 (fn prune [S τ]
   (if (type-variable? τ) (get S τ.name τ)
@@ -240,14 +261,16 @@
             (mismatched-type-error (. args id) expected-type type-here))))
       (values `(,f′ ,(unpack args′)) (prune S ret-type)))))
 
-(fn infer-lam [context salt infer args body]
-  (let [(names types) (split-odd-array args)
-        types′ (map (partial parse-type salt) types)
-        Δcontext (make-dict (map tostring names) types′)
+(fn infer-lam [context salt infer term]
+  (let [(names types full-body) (parse-lam salt term)
+        body (table.remove full-body)
+        Δcontext (make-dict (map tostring names) types)
         context′ (union context Δcontext)
-        (body′ ret-type) (infer context′ salt body)]
-    (push-last types′ ret-type)
-    (values `(fn ,names ,body′) {:constr :function :args types′})))
+        (body′ ret-type) (infer context′ salt body)
+        (full-body′ _) (map-1-in-2-out (partial infer context salt) full-body)]
+    (push-last types ret-type)
+    (values `(fn ,names ,(unpack full-body′) ,body′)
+             {:constr :function :args types})))
 
 (fn infer-type [context salt value]
   (elim-term value

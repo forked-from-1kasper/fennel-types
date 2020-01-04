@@ -1,10 +1,10 @@
 (require-macros :static-typing)
 
 (⊢ id : (→ α α))
-(⊢ id ≔ (λ [a α] a))
+(⊢ id ≔ (λ (a : α) ↦ a))
 
 (⊢ const : (→ α β α))
-(⊢ const ≔ (λ [a α b β] a))
+(⊢ const ≔ (λ (a : α) (b : β) ↦ a))
 
 (⊢ id-test : α)
 (⊢ id-test ≔ (id 42))
@@ -32,6 +32,6 @@
 (local unsafe-variable 1)
 
 (⊢ real-id : (→ real real))
-(⊢ real-id ≔ (λ [a real] a))
+(⊢ real-id ≔ (λ (a : real) ↦ (+ 1 2) a))
 
 (print x y z)
