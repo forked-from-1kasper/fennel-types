@@ -43,8 +43,10 @@
 
 (fn pprint-type [τ]
   (if (complex-type? τ)
-      (string.format "(%s %s)" τ.constr
-        (table.concat (prelude.map pprint-type τ.args) " "))
+      (let [args-str (prelude.map pprint-type τ.args)]
+        (match τ.constr
+          "function" (.. "(" (table.concat args-str " → ") ")")
+          _          (.. "(" τ.constr " " (table.concat args-str " ") ")")))
       (type-variable? τ) τ.display-name
       τ))
 
@@ -218,13 +220,13 @@
       (prelude.foreach-2 (partial get-constraints S)
                          expected-type.args type-here.args)))
 
-(fn constrain [def-name expected-type type-here]
+(fn constrain [def-name τ₁ τ₂]
   (var constraints {})
-  (get-constraints constraints expected-type type-here)
-  (each [key value (pairs constraints)]
+  (get-constraints constraints τ₁ τ₂)
+  (each [τ-name value (pairs constraints)]
     (when (type-operator? value)
-      (prelude.warn (constrain-warning def-name key value))))
-  (prune constraints expected-type))
+      (prelude.warn (constrain-warning def-name τ-name value))))
+  (prune constraints τ₁))
 
 (fn inplace-constrain [context def-name expected-type type-here]
   (let [τ (constrain def-name type-here expected-type)]
@@ -270,4 +272,14 @@
   (assert (sym? name) "invalid syntax")
     (tset type-synonyms (tostring name) (parse-type (prelude.gensym-str) term)))
 
-{"⊢" context-syntax "def-type-synonym" def-type-synonym}
+(fn print-single-type [name]
+  (assert (sym? name) "invalid syntax")
+  (let [name-str (tostring name)
+        τ (. *ctx* name-str)]
+    (prelude.warn (string.format "%s : %s" name-str (pprint-type τ)))))
+
+(fn show-type [...]
+  (prelude.foreach print-single-type [...]))
+
+{"⊢" context-syntax "def-type-synonym" def-type-synonym
+ "show-type" show-type}

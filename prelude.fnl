@@ -53,6 +53,9 @@
   (for [i 1 (length lst₁)]
     (f (. lst₁ i) (. lst₂ i))))
 
+(fn prelude.foreach [f lst]
+  (each [_ x (ipairs lst)] (f x)))
+
 (fn prelude.map [f lst]
   (var lst′ [])
   (each [_ x (ipairs lst)]

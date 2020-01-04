@@ -15,7 +15,14 @@
 (⊢ z ≔ true)
 
 (⊢ +   : real → real → real)
+(⊢ -   : real → real → real)
+(⊢ *   : real → real → real)
+(⊢ /   : real → real → real)
 (⊢ >   : real → real → bool)
+
+(⊢ =   : α → α → bool)
+(⊢ if  : bool → α → α → α)
+
 (⊢ not : bool → bool)
 
 (⊢ x : real)
@@ -37,10 +44,28 @@
 ;; Church natural numbers
 (def-type-synonym nat (α → (α → α) → α))
 
+(⊢ fix : (α → α) → α)
+(⊢ fix ≔ (λ (f : α → α) ↦ (f (fix f))))
+
+(⊢ fix′ : ((α → β) → α → β) → α → β)
+(⊢ fix′ ≔ (λ (f : (α → β) → α → β) (x : α) ↦
+             (f (λ (y : α) ↦ (fix′ f y)) x)))
+
+(⊢ fact : real → real)
+(⊢ fact ≔ (λ (n : real) ↦
+             (if (= n 0) 1 (* n (fact (- n 1))))))
+
+(⊢ fact′-aux ≔
+  (λ (f : real → real) (n : real) ↦
+    (if (= n 0) 1 (* n (f (- n 1))))))
+(⊢ fact′ ≔ (λ (n : real) ↦ (fix′ fact′-aux n)))
+
 (⊢ zero : nat)
 (⊢ succ : nat → nat)
 
 (⊢ zero ≔ (λ (z : α) (s : α → α) ↦ z))
 (⊢ succ ≔ (λ (n : nat) ↦ (λ (z : α) (s : α → α) ↦ (s (n z s)))))
 
-(print x y z)
+(show-type fix fix′ zero succ)
+
+(print "fact" (fact 5) "fact′" (fact′ 5))
