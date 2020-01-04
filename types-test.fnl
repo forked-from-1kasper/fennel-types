@@ -9,8 +9,8 @@
 (⊢ id-test : α)
 (⊢ id-test ≔ (id 42))
 
-(⊢ const-test : real)
-(⊢ const-test ≔ (const 12 "test"))
+(⊢ const-test : string)
+(⊢ const-test ≔ (const "test" 42))
 
 (⊢ z ≔ true)
 

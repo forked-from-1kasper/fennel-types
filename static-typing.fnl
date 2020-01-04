@@ -285,8 +285,7 @@
 ;;;  For example, if we first define “x : α”,
 ;;;  then set “x ≔ 42”, system will re-define type of “x” as “real”.
 (fn get-constraints [S expected-type type-here]
-  (if (and (type-variable? expected-type)
-           (type-operator? type-here))
+  (if (type-variable? expected-type)
       (tset S expected-type.name type-here)
       (and (complex-type? expected-type)
            (complex-type? type-here))
@@ -297,7 +296,8 @@
   (var constraints {})
   (get-constraints constraints expected-type type-here)
   (each [key value (pairs constraints)]
-    (warn (constrain-warning def-name key value)))
+    (when (type-operator? value)
+      (warn (constrain-warning def-name key value))))
   (prune constraints expected-type))
 
 (fn inplace-constrain [context def-name expected-type type-here]
