@@ -40,10 +40,7 @@
   (table.remove arr (length arr)))
 
 (fn push-last [arr x]
-  (let [len (length arr)]
-    (match len
-      0 (table.insert arr x)
-      _ (table.insert arr len x))))
+  (table.insert arr x))
 
 (fn map-1-in-2-out [f lst]
   (var res₁ []) (var res₂ [])
@@ -96,7 +93,7 @@
 (fn even? [n] (= (% n 2) 1))
 
 ;;; Type checker configuration
-(local primitive-types
+(local type-synonyms
   {"real"   :number
    "string" :string
    "bool"   :boolean
@@ -202,7 +199,7 @@
   (if (list? term)
       (parse-complex-type (partial parse-type salt) term)
       (let [term′ (tostring term)]
-        (or (. primitive-types term′)
+        (or (. type-synonyms term′)
             (parse-type-variable term′ salt)
             (error (unknown-type-error term′))))))
 
@@ -358,4 +355,8 @@
         (split-by-sep [...] "⊢" context-commands)]
     (func first-part second-part)))
 
-{"⊢" context-syntax}
+(fn def-type-synonym [name term]
+  (assert (sym? name) "invalid syntax")
+    (tset type-synonyms (tostring name) (parse-type (gensym-str) term)))
+
+{"⊢" context-syntax "def-type-synonym" def-type-synonym}

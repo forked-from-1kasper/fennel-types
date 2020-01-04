@@ -34,4 +34,13 @@
 (⊢ real-id : real → real)
 (⊢ real-id ≔ (λ (a : real) ↦ (+ 1 2) a))
 
+;; Church natural numbers
+(def-type-synonym nat (α → (α → α) → α))
+
+(⊢ zero : nat)
+(⊢ succ : nat → nat)
+
+(⊢ zero ≔ (λ (z : α) (s : α → α) ↦ z))
+(⊢ succ ≔ (λ (n : nat) ↦ (λ (z : α) (s : α → α) ↦ (s (n z s)))))
+
 (print x y z)
