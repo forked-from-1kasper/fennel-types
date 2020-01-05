@@ -1,4 +1,4 @@
-(local prelude (include :prelude))
+(local basic (include :basic))
 
 (var *ctx* {})
 
@@ -43,7 +43,7 @@
 
 (fn pprint-type [τ]
   (if (complex-type? τ)
-      (let [args-str (prelude.map pprint-type τ.args)]
+      (let [args-str (basic.map pprint-type τ.args)]
         (match τ.constr
           "function" (.. "(" (table.concat args-str " → ") ")")
           _          (.. "(" τ.constr " " (table.concat args-str " ") ")")))
@@ -73,7 +73,7 @@
 ;;; Convert S-expression (some type) into internal representation
 (fn split-by-sep [term syntax-name separators]
   (var first-part []) (var sep? false)
-  (while (and (not sep?) (prelude.non-empty? term))
+  (while (and (not sep?) (basic.non-empty? term))
     (let [cur (table.remove term 1)
           sep-val (. separators (tostring cur))]
       (if (and (sym? cur) sep-val)
@@ -86,7 +86,7 @@
   (match lst [type-constr & args]
     (let [type-constr′ (tostring type-constr)
           type-desc (. complex-types type-constr′)
-          args′ (prelude.map parser args)]
+          args′ (basic.map parser args)]
       (assert (sym? type-constr) "invalid syntax")
       (assert (> (length args′) 1) "function type must have at least 2 arguments")
       (assert type-desc (unknown-type-error type-constr′))
@@ -102,8 +102,8 @@
 (fn split-by-arrow [term]
   (var res [])
   (each [idx val (ipairs term)]
-    (if (prelude.odd? idx)  (assert (prelude.sym= val "→") "invalid arrow syntax")
-        (prelude.even? idx) (table.insert res val)))
+    (if (basic.odd? idx)  (assert (basic.sym= val "→") "invalid arrow syntax")
+        (basic.even? idx) (table.insert res val)))
   res)
 
 (fn parse-non-arrow [parse-type salt term]
@@ -118,7 +118,7 @@
   (let [args (split-by-arrow term)]
     (if (= (length args) 1)
         (parse-non-arrow parse-type salt (. args 1))
-        {:constr :function :args (prelude.map (partial parse-type salt) args)})))
+        {:constr :function :args (basic.map (partial parse-type salt) args)})))
 
 (fn parse-annotated-variable [salt term]
   (let [(_ var-list body) (split-by-sep term ":" {":" true})
@@ -129,28 +129,28 @@
 
 (fn parse-lam [salt term]
   (let [(_ args-ann body) (split-by-sep term "λ" {"↦" true})
-        (args types) (prelude.map-1-in-2-out
+        (args types) (basic.map-1-in-2-out
                        (partial parse-annotated-variable salt) args-ann)]
     (values args types body)))
 
 (fn elim-term [term app lam variable atom]
   (if (list? term)
     (match term [f & args]
-      (if (prelude.sym= f "λ") (lam args) (app f args)))
+      (if (basic.sym= f "λ") (lam args) (app f args)))
     (sym? term) (variable term)
     (atom term)))
 
 ;;; Type inference and unification
 (fn prune [S τ]
-  (if (type-variable? τ) (prelude.get S τ.name τ)
+  (if (type-variable? τ) (basic.get S τ.name τ)
       (complex-type? τ) {:constr τ.constr
-                         :args (prelude.map (partial prune S) τ.args)}
+                         :args (basic.map (partial prune S) τ.args)}
       τ))
 
 (fn unify [S T₁ T₂]
   (let [τ₁ (prune S T₁) τ₂ (prune S T₂)]
     (if (type-variable? τ₁)
-        (prelude.tset-truth S τ₁.name τ₂)
+        (basic.tset-truth S τ₁.name τ₂)
 
         (and (type-operator? τ₁) (type-variable? τ₂))
         (unify S τ₂ τ₁)
@@ -161,10 +161,10 @@
         (and (complex-type? τ₁) (complex-type? τ₂)
              (= τ₁.constr τ₂.constr)
              (= (length τ₁.args) (length τ₂.args)))
-        (prelude.any-2 (partial unify S) τ₁.args τ₂.args))))
+        (basic.any-2 (partial unify S) τ₁.args τ₂.args))))
 
 (fn infer-constant-type [context salt infer value]
-  (if (or (table? value) (prelude.function? value))
+  (if (or (table? value) (basic.function? value))
       (error "non-primitive types are not implemeneted yet, sorry")
       (values value (type value))))
 
@@ -183,9 +183,9 @@
 
 (fn infer-ap [context salt infer f args]
   (let [(f′ function-type) (infer context salt f)
-        (args′ types-here) (prelude.map-1-in-2-out (partial infer context salt) args)
-        expected-types (prelude.copy function-type.args)
-        ret-type (prelude.pop-from-end expected-types)
+        (args′ types-here) (basic.map-1-in-2-out (partial infer context salt) args)
+        expected-types (basic.copy function-type.args)
+        ret-type (basic.pop-from-end expected-types)
         expected-args-num (length expected-types)
         given-args-num (length types-here)]
     (if (> given-args-num expected-args-num)
@@ -206,10 +206,10 @@
 (fn infer-lam [context salt infer term]
   (let [(names types full-body) (parse-lam salt term)
         body (table.remove full-body)
-        Δcontext (prelude.make-dict (prelude.map tostring names) types)
-        context′ (prelude.union context Δcontext)
+        Δcontext (basic.make-dict (basic.map tostring names) types)
+        context′ (basic.union context Δcontext)
         (body′ ret-type) (infer context′ salt body)
-        (full-body′ _) (prelude.map-1-in-2-out
+        (full-body′ _) (basic.map-1-in-2-out
                          (partial infer context salt) full-body)]
     (table.insert types ret-type) (table.insert full-body′ body′)
     (values `(fn ,names ,(unpack full-body′))
@@ -232,7 +232,7 @@
       (tset S expected-type.name type-here)
       (and (complex-type? expected-type)
            (complex-type? type-here))
-      (prelude.foreach-2 (partial get-constraints S)
+      (basic.foreach-2 (partial get-constraints S)
                          expected-type.args type-here.args)))
 
 (fn constrain [def-name τ₁ τ₂]
@@ -240,7 +240,7 @@
   (get-constraints constraints τ₁ τ₂)
   (each [τ-name value (pairs constraints)]
     (when (type-operator? value)
-      (prelude.warn (constrain-warning def-name τ-name value))))
+      (basic.warn (constrain-warning def-name τ-name value))))
   (prune constraints τ₁))
 
 (fn inplace-constrain [context def-name expected-type type-here]
@@ -252,8 +252,8 @@
   (let [body (table.remove full-body)
         name (. names 1)
         name-str (tostring name)
-        salt (prelude.gensym-str)
-        (full-body′ _) (prelude.map-1-in-2-out
+        salt (basic.gensym-str)
+        (full-body′ _) (basic.map-1-in-2-out
                          (partial infer-type *ctx* salt) full-body)
         (body′ type-here) (infer-type *ctx* salt body)
         expected-type (. *ctx* name-str)]
@@ -266,7 +266,7 @@
     `(local ,name ,(unpack full-body′))))
 
 (fn declare-type [names term]
-  (let [τ (parse-type (prelude.gensym-str) term)]
+  (let [τ (parse-type (basic.gensym-str) term)]
     (each [_ name (ipairs names)]
       (tset *ctx* (tostring name) τ))))
 
@@ -285,17 +285,17 @@
 
 (fn def-type-synonym [name term]
   (assert (sym? name) "invalid syntax")
-    (tset type-synonyms (tostring name) (parse-type (prelude.gensym-str) term)))
+    (tset type-synonyms (tostring name) (parse-type (basic.gensym-str) term)))
 
 (fn print-single-type [name]
   (assert (sym? name) "invalid syntax")
   (let [name-str (tostring name)
         τ (. *ctx* name-str)]
     (assert τ (unknown-variable-error name-str))
-    (prelude.warn (string.format "%s : %s" name-str (pprint-type τ)))))
+    (basic.warn (string.format "%s : %s" name-str (pprint-type τ)))))
 
 (fn show-type [...]
-  (prelude.foreach print-single-type [...]))
+  (basic.foreach print-single-type [...]))
 
 {"⊢" context-syntax "def-type-synonym" def-type-synonym
  "show-type" show-type}
