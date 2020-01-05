@@ -20,15 +20,15 @@
 (⊢ - : real → real → real)
 (⊢ inc ≔ (+ 1))
 
-(⊢ nat-to-real ≔ (λ (n : nat) ↦ (n inc 0)))
+(⊢ nat→real ≔ (λ (n : nat) ↦ (n inc 0)))
 
 (⊢ =   : α → α → bool)
 (⊢ if  : bool → α → α → α)
 
-(⊢ real-to-nat : real → nat)
-(⊢ real-to-nat ≔ (λ (n : real) ↦
+(⊢ real→nat : real → nat)
+(⊢ real→nat ≔ (λ (n : real) ↦
                     (if (= n 0) zero
-                        (succ (real-to-nat (- n 1))))))
+                        (succ (real→nat (- n 1))))))
 
 (⊢ one   ≔ (succ zero))
 (⊢ two   ≔ (succ one))
@@ -36,5 +36,5 @@
 
 (show-type zero succ mult exp)
 (print (string.format "2³ = %d\n2 × 3 = %d"
-         (nat-to-real (exp (real-to-nat 2) three))
-         (nat-to-real (mult two three))))
+         (nat→real (exp (real→nat 2) three))
+         (nat→real (mult two three))))
