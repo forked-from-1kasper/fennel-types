@@ -49,7 +49,7 @@
 
 (⊢ fix′ : ((α → β) → α → β) → α → β)
 (⊢ fix′ ≔ (λ (f : (α → β) → α → β) (x : α) ↦
-             (f (λ (y : α) ↦ (fix′ f y)) x)))
+             (f (fix′ f) x)))
 
 (⊢ fact : real → real)
 (⊢ fact ≔ (λ (n : real) ↦
@@ -66,6 +66,8 @@
 (⊢ zero ≔ (λ (z : α) (s : α → α) ↦ z))
 (⊢ succ ≔ (λ (n : nat) ↦ (λ (z : α) (s : α → α) ↦ (s (n z s)))))
 
-(show-type fix fix′ zero succ)
+(⊢ zero? ≔ (= 0))
+
+(show-type fix fix′ zero succ zero?)
 
 (print "fact" (fact 5) "fact′" (fact′ 5))

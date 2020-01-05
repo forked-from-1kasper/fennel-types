@@ -173,20 +173,35 @@
     (assert type-here (unknown-variable-error (tostring value)))
     (values value type-here)))
 
+(fn check-list [exprs expected-types types-here]
+  (var S {})
+  (each [id type-here (ipairs types-here)]
+    (let [expected-type (. expected-types id)]
+      (assert (unify S expected-type type-here)
+        (mismatched-type-error (. exprs id) expected-type type-here))))
+  S)
+
 (fn infer-ap [context salt infer f args]
   (let [(f′ function-type) (infer context salt f)
-        (args′ types) (prelude.map-1-in-2-out (partial infer context salt) args)]
-    (let [arg-types (prelude.copy function-type.args)
-          ret-type (prelude.pop-from-end arg-types)]
-      (assert (= (length arg-types) (length types))
-              (string.format "not enough or more than required arguments for “%s”"
-                             (tostring f)))
-      (var S {})
-      (each [id type-here (ipairs types)]
-        (let [expected-type (. arg-types id)]
-          (assert (unify S expected-type type-here)
-            (mismatched-type-error (. args id) expected-type type-here))))
-      (values `(,f′ ,(unpack args′)) (prune S ret-type)))))
+        (args′ types-here) (prelude.map-1-in-2-out (partial infer context salt) args)
+        expected-types (prelude.copy function-type.args)
+        ret-type (prelude.pop-from-end expected-types)
+        expected-args-num (length expected-types)
+        given-args-num (length types-here)]
+    (if (> given-args-num expected-args-num)
+        (error "more than required arguments for “%s”" (tostring f))
+        (= given-args-num expected-args-num)
+        (values `(,f′ ,(unpack args′))
+                 (prune (check-list args expected-types types-here) ret-type))
+        (< given-args-num expected-args-num)
+        (do (var partial-function-type [])
+            (while (not= (length expected-types) given-args-num)
+              (table.insert partial-function-type (table.remove expected-types)))
+            (table.insert partial-function-type ret-type)
+            (values `(partial ,f′ ,(unpack args′))
+                     (prune (check-list args expected-types types-here)
+                            {:constr :function
+                             :args partial-function-type}))))))
 
 (fn infer-lam [context salt infer term]
   (let [(names types full-body) (parse-lam salt term)
