@@ -41,9 +41,6 @@
 (⊢ real-id : real → real)
 (⊢ real-id ≔ (λ (a : real) ↦ (+ 1 2) a))
 
-;; Church natural numbers
-(def-type-synonym nat (α → (α → α) → α))
-
 (⊢ fix : (α → α) → α)
 (⊢ fix ≔ (λ (f : α → α) ↦ (f (fix f))))
 
@@ -60,14 +57,8 @@
     (if (= n 0) 1 (* n (f (- n 1))))))
 (⊢ fact′ ≔ (λ (n : real) ↦ (fix′ fact′-aux n)))
 
-(⊢ zero : nat)
-(⊢ succ : nat → nat)
-
-(⊢ zero ≔ (λ (z : α) (s : α → α) ↦ z))
-(⊢ succ ≔ (λ (n : nat) ↦ (λ (z : α) (s : α → α) ↦ (s (n z s)))))
-
 (⊢ zero? ≔ (= 0))
 
-(show-type fix fix′ zero succ zero?)
+(show-type fix fix′ zero?)
 
 (print "fact" (fact 5) "fact′" (fact′ 5))

@@ -291,6 +291,7 @@
   (assert (sym? name) "invalid syntax")
   (let [name-str (tostring name)
         τ (. *ctx* name-str)]
+    (assert τ (unknown-variable-error name-str))
     (prelude.warn (string.format "%s : %s" name-str (pprint-type τ)))))
 
 (fn show-type [...]
