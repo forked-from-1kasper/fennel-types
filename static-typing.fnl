@@ -247,10 +247,8 @@
   (let [τ (constrain def-name type-here expected-type)]
     (tset context def-name (constrain def-name expected-type τ))))
 
-(fn define-constant [names full-body]
-  (assert (= (length names) 1) "cannot define multiple values")
+(fn define-constant [name full-body]
   (let [body (table.remove full-body)
-        name (. names 1)
         name-str (tostring name)
         salt (basic.gensym-str)
         (full-body′ _) (basic.map-1-in-2-out
@@ -265,6 +263,15 @@
     (table.insert full-body′ body′)
     `(local ,name ,(unpack full-body′))))
 
+(fn define-sugar [names full-body]
+  (match names [name & args]
+    (define-constant name
+      (if (basic.non-empty? args)
+          (do (var lambda-term `(λ))
+              (basic.append lambda-term args [(sym "↦")] full-body)
+              [lambda-term])
+          full-body))))
+
 (fn declare-type [names term]
   (let [τ (parse-type (basic.gensym-str) term)]
     (each [_ name (ipairs names)]
@@ -275,8 +282,8 @@
 (local colon ":")
 (local context-commands
   {colon  declare-type
-   ":="   define-constant
-   "≔"   define-constant})
+   ":="   define-sugar
+   "≔"   define-sugar})
 
 (fn context-syntax [...]
   (let [(func first-part second-part)

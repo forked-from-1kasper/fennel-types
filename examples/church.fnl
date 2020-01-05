@@ -8,27 +8,27 @@
 (⊢ mult : nat → nat → nat)
 (⊢ exp  : nat → nat → nat)
 
-(⊢ zero ≔ (λ (s : α → α) (z : α) ↦ z))
-(⊢ succ ≔ (λ (n : nat) ↦ (λ (s : α → α) (z : α) ↦ (s (n s z)))))
-(⊢ mult ≔ (λ (m : nat) (n : nat) ↦
-             (λ (s : α → α) (z : α) ↦ (m (n s) z))))
-(⊢ exp  ≔ (λ (m : nat) (n : nat) ↦
-             (λ (s : α → α) (z : α) ↦
-               ((n (λ (f : α → α) ↦ (m f)) s) z))))
+(⊢ zero (s : α → α) (z : α) ≔ z)
+(⊢ succ (n : nat) ≔ (λ (s : α → α) (z : α) ↦ (s (n s z))))
+(⊢ mult (m : nat) (n : nat) ≔
+  (λ (s : α → α) (z : α) ↦ (m (n s) z)))
+(⊢ exp (m : nat) (n : nat) ≔
+  (λ (s : α → α) (z : α) ↦
+    ((n (λ (f : α → α) ↦ (m f)) s) z)))
 
 (⊢ + : real → real → real)
 (⊢ - : real → real → real)
 (⊢ inc ≔ (+ 1))
 
-(⊢ nat→real ≔ (λ (n : nat) ↦ (n inc 0)))
+(⊢ nat→real (n : nat) ≔ (n inc 0))
 
 (⊢ =   : α → α → bool)
 (⊢ if  : bool → α → α → α)
 
 (⊢ real→nat : real → nat)
-(⊢ real→nat ≔ (λ (n : real) ↦
-                    (if (= n 0) zero
-                        (succ (real→nat (- n 1))))))
+(⊢ real→nat (n : real) ≔
+  (if (= n 0) zero
+      (succ (real→nat (- n 1)))))
 
 (⊢ one   ≔ (succ zero))
 (⊢ two   ≔ (succ one))

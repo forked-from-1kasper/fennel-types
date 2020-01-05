@@ -1,10 +1,10 @@
 (require-macros :static-typing)
 
 (⊢ id : α → α)
-(⊢ id ≔ (λ (a : α) ↦ a))
+(⊢ id (a : α) ≔ a)
 
 (⊢ const : α → β → α)
-(⊢ const ≔ (λ (a : α) (b : β) ↦ a))
+(⊢ const (a : α) (b : β) ≔ a)
 
 (⊢ id-test : α)
 (⊢ id-test ≔ (id 42))
@@ -39,23 +39,21 @@
 (local unsafe-variable 1)
 
 (⊢ real-id : real → real)
-(⊢ real-id ≔ (λ (a : real) ↦ (+ 1 2) a))
-
-(⊢ fix : (α → α) → α)
-(⊢ fix ≔ (λ (f : α → α) ↦ (f (fix f))))
-
-(⊢ fix′ : ((α → β) → α → β) → α → β)
-(⊢ fix′ ≔ (λ (f : (α → β) → α → β) (x : α) ↦
-             (f (fix′ f) x)))
+(⊢ real-id (a : real) ≔ a)
 
 (⊢ fact : real → real)
-(⊢ fact ≔ (λ (n : real) ↦
-             (if (= n 0) 1 (* n (fact (- n 1))))))
+(⊢ fact (n : real) ≔
+  (if (= n 0) 1 (* n (fact (- n 1)))))
 
-(⊢ fact′-aux ≔
-  (λ (f : real → real) (n : real) ↦
-    (if (= n 0) 1 (* n (f (- n 1))))))
-(⊢ fact′ ≔ (λ (n : real) ↦ (fix′ fact′-aux n)))
+(⊢ fix : (α → α) → α)
+(⊢ fix (f : α → α) ≔ (f (fix f)))
+
+(⊢ fix′ : ((α → β) → α → β) → α → β)
+(⊢ fix′ (f : (α → β) → α → β) (x : α) ≔ (f (fix′ f) x))
+
+(⊢ fact′-aux (f : real → real) (n : real) ≔
+  (if (= n 0) 1 (* n (f (- n 1)))))
+(⊢ fact′ (n : real) ≔ (fix′ fact′-aux n))
 
 (⊢ zero? ≔ (= 0))
 

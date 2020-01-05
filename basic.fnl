@@ -56,6 +56,9 @@
 (fn basic.foreach [f lst]
   (each [_ x (ipairs lst)] (f x)))
 
+(fn basic.append [dest ...]
+  (basic.foreach (partial basic.foreach (partial table.insert dest)) [...]))
+
 (fn basic.map [f lst]
   (var lst′ [])
   (each [_ x (ipairs lst)]
