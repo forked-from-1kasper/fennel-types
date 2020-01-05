@@ -189,7 +189,7 @@
         expected-args-num (length expected-types)
         given-args-num (length types-here)]
     (if (> given-args-num expected-args-num)
-        (error "more than required arguments for “%s”" (tostring f))
+        (error (string.format "more than required arguments for “%s”" (tostring f)))
         (= given-args-num expected-args-num)
         (values `(,f′ ,(unpack args′))
                  (prune (check-list args expected-types types-here) ret-type))
@@ -210,7 +210,7 @@
         context′ (basic.union context Δcontext)
         (body′ ret-type) (infer context′ salt body)
         (full-body′ _) (basic.map-1-in-2-out
-                         (partial infer context salt) full-body)]
+                         (partial infer context′ salt) full-body)]
     (table.insert types ret-type) (table.insert full-body′ body′)
     (values `(fn ,names ,(unpack full-body′))
              {:constr :function :args types})))
