@@ -22,6 +22,9 @@
 
 (⊢ nat→real (n : nat) ≔ (n inc 0))
 
+(⊢ .. : string → string → string)
+(⊢ nat→string (n : nat) ≔ (n (.. "S") "Z"))
+
 (⊢ =   : α → α → bool)
 (⊢ if  : bool → α → α → α)
 
@@ -38,3 +41,7 @@
 (print (string.format "2³ = %d\n2 × 3 = %d"
          (nat→real (exp (real→nat 2) three))
          (nat→real (mult two three))))
+(print (nat→string zero)
+       (nat→string one)
+       (nat→string two)
+       (nat→string three))
