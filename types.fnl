@@ -31,4 +31,11 @@
       (here.variable? τ) τ.display-name
       τ))
 
+(fn here.elim-term [term app lam variable atom]
+  (if (list? term)
+    (match term [f & args]
+      (if (here.sym= f "λ") (lam args) (app f args)))
+    (sym? term) (variable term)
+    (atom term)))
+
 here
