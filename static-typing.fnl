@@ -32,10 +32,8 @@
       (tset *ctx* (tostring name) τ))))
 
 ;;; Macro syntax
-;; Fennel reads ":" in tables incorrectly
-(local colon ":")
 (local context-commands
-  {colon  declare-type
+  {":"    declare-type
    ":="   define-sugar
    "≔"   define-sugar})
 
