@@ -65,8 +65,19 @@
     (table.insert lst′ (f x)))
   lst′)
 
+(fn here.init-last [lst]
+  (var lst′ []) (var last nil)
+  (let [last-idx (length lst)]
+    (each [idx x (ipairs lst)]
+      (if (= idx last-idx) (set last x)
+          (table.insert lst′ x))))
+  (values lst′ last))
+
 (fn here.sym= [term template]
   (= (tostring term) template))
+
+(fn here.sym≠ [term template]
+  (not (here.sym= term template)))
 
 (fn here.any-2 [f lst₁ lst₂]
   (var good? true) (var i 1)

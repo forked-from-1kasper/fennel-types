@@ -1,12 +1,12 @@
 (require-macros :static-typing)
 
 ;; Church numerals
-(def-type-synonym nat ((α → α) → α → α))
+(def-type-synonym nat ((α → α) × α → α))
 
 (⊢ zero : nat)
 (⊢ succ : nat → nat)
-(⊢ mult : nat → nat → nat)
-(⊢ exp  : nat → nat → nat)
+(⊢ mult : nat × nat → nat)
+(⊢ exp  : nat × nat → nat)
 
 (⊢ zero (s : α → α) (z : α) ≔ z)
 (⊢ succ (n : nat) ≔ (λ (s : α → α) (z : α) ↦ (s (n s z))))
@@ -16,17 +16,17 @@
   (λ (s : α → α) (z : α) ↦
     ((n (λ (f : α → α) ↦ (m f)) s) z)))
 
-(⊢ + : real → real → real)
-(⊢ - : real → real → real)
+(⊢ + : real × real → real)
+(⊢ - : real × real → real)
 (⊢ inc ≔ (+ 1))
 
 (⊢ nat→real (n : nat) ≔ (n inc 0))
 
-(⊢ .. : string → string → string)
+(⊢ .. : string × string → string)
 (⊢ nat→string (n : nat) ≔ (n (.. "S") "Z"))
 
-(⊢ =   : α → α → bool)
-(⊢ if  : bool → α → α → α)
+(⊢ =  : α × α → bool)
+(⊢ if : bool × α × α → α)
 
 (⊢ real→nat : real → nat)
 (⊢ real→nat (n : real) ≔

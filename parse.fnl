@@ -31,9 +31,13 @@
 
 (fn split-by-arrow [term]
   (var res [])
-  (each [idx val (ipairs term)]
-    (if (here.odd? idx)  (assert (here.sym= val "→") "invalid arrow syntax")
-        (here.even? idx) (table.insert res val)))
+  (let [last-but-one (- (length term) 1)]
+    (each [idx val (ipairs term)]
+      (if (and (= last-but-one idx) (here.sym≠ val "→"))
+          (error "expected “→” before result type")
+          (and (here.odd? idx) (not= last-but-one idx) (here.sym≠ val "×"))
+          (error "expected “×” between argument types")
+          (here.even? idx) (table.insert res val))))
   res)
 
 (fn parse-non-arrow [parse-type salt term]

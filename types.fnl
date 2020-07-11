@@ -26,7 +26,8 @@
   (if (here.complex? τ)
       (let [args-str (here.map here.type→string τ.args)]
         (match τ.constr
-          "function" (.. "(" (table.concat args-str " → ") ")")
+          "function" (let [(init last) (here.init-last args-str)]
+                       (.. "(" (table.concat init " × ") " → " last ")"))
           _          (.. "(" τ.constr " " (table.concat args-str " ") ")")))
       (here.variable? τ) τ.display-name
       τ))

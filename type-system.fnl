@@ -93,7 +93,7 @@
       (and (here.complex? expected-type)
            (here.complex? type-here))
       (here.foreach-2 (partial get-constraints S)
-                         expected-type.args type-here.args)))
+                       expected-type.args type-here.args)))
 
 (fn constrain [def-name τ₁ τ₂]
   (var constraints {})

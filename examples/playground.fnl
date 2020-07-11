@@ -3,8 +3,12 @@
 (⊢ id : α → α)
 (⊢ id (a : α) ≔ a)
 
-(⊢ const : α → β → α)
+(⊢ const : α × β → α)
 (⊢ const (a : α) (b : β) ≔ a)
+
+(⊢ curry : (α × β → γ) → (α → (β → γ)))
+(⊢ curry (f : α × β → γ) ≔
+  (λ (x : α) ↦ (λ (y : β) ↦ (f x y))))
 
 (⊢ id-test : α)
 (⊢ id-test ≔ (id 42))
@@ -14,14 +18,14 @@
 
 (⊢ z ≔ true)
 
-(⊢ +   : real → real → real)
-(⊢ -   : real → real → real)
-(⊢ *   : real → real → real)
-(⊢ /   : real → real → real)
-(⊢ >   : real → real → bool)
+(⊢ + : real × real → real)
+(⊢ - : real × real → real)
+(⊢ * : real × real → real)
+(⊢ / : real × real → real)
+(⊢ > : real × real → bool)
 
-(⊢ =   : α → α → bool)
-(⊢ if  : bool → α → α → α)
+(⊢ =   : α × α → bool)
+(⊢ if  : bool × α × α → α)
 
 (⊢ not : bool → bool)
 
