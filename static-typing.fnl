@@ -15,7 +15,7 @@
           (here.inplace-constrain *ctx* name-str expected-type type-here))
       (tset *ctx* name-str type-here))
     (table.insert full-body′ body′)
-    `(local ,name ,(unpack full-body′))))
+    `(global ,name ,(unpack full-body′))))
 
 (fn define-sugar [names full-body]
   (match names [name & args]
